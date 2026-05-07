@@ -1,0 +1,21 @@
+# --- Prolog (SWI-Prolog) ---
+# Archivos temporales de edición
+*~
+*.pl~
+*.qlf
+*.log
+
+# --- Python (Si usan pyswip para la interfaz) ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+
+# --- IDEs y Sistema ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
