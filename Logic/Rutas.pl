@@ -2,5 +2,6 @@
 
 lugar(zamora).
 lugar(morelia).
+lugar(queretaro).
 %        origen, destino, distancia, tiempo, tipo de camino 
 conexion(zamora, morelia, 144, 200, cuota).
