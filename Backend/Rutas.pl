@@ -8,9 +8,6 @@ lugar(uruapan).
 lugar(patzcuaro).
 lugar(tangancicuaro).
 
-
-
-
 %        origen, destino, distancia, costo, tipo de camino 
 conexion(zamora, morelia, 150, 150, cuota).
 conexion(zamora, morelia, 200, 99, libre).
@@ -24,12 +21,10 @@ conexion(jacona, tangancicuaro, 20, 0, libre).
 conexion(morelia, patzcuaro, 60, 30, libre).
 conexion(morelia, jacona, 190, 170, cuota).
 
-
 conexion(morelia, tangancicuaro, 130, 70, libre).
 
 conexion(queretaro, morelia, 600, 100, libre).
 conexion(queretaro, morelia, 400, 300, cuota).
-
 
 servicio(morelia, gasolinera).
 servicio(queretaro, turistico).
@@ -40,9 +35,9 @@ servicio(morelia, paraderos).
 servicio(morelia, turistico).
 servicio(patzcuaro, turistico).
 
-
-
+% ==========================================
 % Fase 2
+% ==========================================
 
 % Condición 1: El camino va directo (de Origen a Destino)
 tramo(Origen, Destino, Distancia, Costo, Tipo) :- 
@@ -64,9 +59,9 @@ buscar_ruta(Actual, Destino, Visitados, [Destino | Visitados]) :-
 % Caso Recursivo: Damos un salto a un punto intermedio
 buscar_ruta(Actual, Destino, Visitados, RutaFinal) :-
     tramo(Actual, Intermedio, _, _, _),           % 1. Buscamos a dónde podemos ir desde aquí
+    Intermedio \= Destino,                        % <-- CORRECCIÓN: No usar el destino como escala
     \+ member(Intermedio, Visitados),             % 2. CONTROL DE CICLOS: Verificamos no haber pisado esa ciudad antes
     buscar_ruta(Intermedio, Destino, [Intermedio | Visitados], RutaFinal). % 3. Repetimos el viaje desde la nueva ciudad
-
 
 % ==========================================
 % CÁLCULO DE MÉTRICAS 
@@ -84,6 +79,7 @@ buscar_ruta_con_costo(Actual, Destino, Visitados, [Destino | Visitados], Costo, 
 % 3. El Caso Recursivo: Cuando saltas a una ciudad intermedia
 buscar_ruta_con_costo(Actual, Destino, Visitados, RutaFinal, CostoTotal, DistanciaTotal) :-
     tramo(Actual, Intermedio, DistanciaTramo, CostoTramo, _),
+    Intermedio \= Destino,                        % <-- CORRECCIÓN: Evita el turismo extra
     \+ member(Intermedio, Visitados),
     % Aquí ocurre la magia: seguimos buscando lo que falta...
     buscar_ruta_con_costo(Intermedio, Destino, [Intermedio | Visitados], RutaFinal, CostoRestante, DistanciaRestante),
@@ -96,10 +92,7 @@ buscar_ruta_con_costo(Actual, Destino, Visitados, RutaFinal, CostoTotal, Distanc
 % ==========================================
 
 ruta_en_presupuesto(Origen, Destino, PresupuestoMaximo, RutaFinal) :-
-    % 1. Buscamos cualquier ruta y sacamos cuánto cuesta
     ruta_con_costo(Origen, Destino, RutaFinal, CostoTotal, _),
-    
-    % 2. Filtramos: El costo total debe ser menor o igual al presupuesto
     CostoTotal =< PresupuestoMaximo.
 
 % ==========================================
@@ -108,10 +101,7 @@ ruta_en_presupuesto(Origen, Destino, PresupuestoMaximo, RutaFinal) :-
 
 % Encuentra rutas que incluyan al menos una gasolinera
 ruta_con_gasolinera(Origen, Destino, Ruta) :-
-    % 1. Generamos una ruta posible
     ruta(Origen, Destino, Ruta),
-    
-    % 2. Verificamos que algún Lugar dentro de esa Ruta tenga gasolinera
     member(Lugar, Ruta),
     servicio(Lugar, gasolinera).
 
@@ -164,7 +154,6 @@ ruta_mixta(Origen, Destino, Ruta) :-
     ruta(Origen, Destino, Ruta),
     \+ todos_libres(Ruta),   % NO es puramente libre
     \+ todos_cuota(Ruta).    % NO es puramente de cuota
-
 
 % ==========================================
 % CONSULTAS AVANZADAS 

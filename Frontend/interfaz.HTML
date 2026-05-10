@@ -7,8 +7,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #059669; /* Verde esmeralda para temática turística */
+            --primary: #059669; /* Verde esmeralda */
             --primary-hover: #047857;
+            --secundary: #3b82f6; /* Azul para el botón de alterna */
+            --secundary-hover: #2563eb;
             --text-dark: #1f2937;
             --text-light: #4b5563;
         }
@@ -22,8 +24,6 @@
             justify-content: center; 
             align-items: center;
             box-sizing: border-box;
-
-            /* FONDO EN ALTA DEFINICIÓN (4K) */
             background-image: url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2560'); 
             background-size: cover; 
             background-position: center; 
@@ -31,7 +31,6 @@
             background-attachment: fixed; 
         }
 
-        /* Tarjeta con efecto de cristal esmerilado */
         .card { 
             background: rgba(255, 255, 255, 0.82); 
             backdrop-filter: blur(15px); 
@@ -67,7 +66,6 @@
 
         .opciones-flex { display: flex; gap: 10px; flex-wrap: wrap; }
 
-        /* Estilo de botones tipo "Chip" para filtros */
         .chip {
             display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.6);
             padding: 10px 14px; border: 1px solid rgba(0,0,0,0.08); border-radius: 10px;
@@ -82,8 +80,12 @@
             border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; 
             transition: all 0.3s; margin-top: 10px; box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.4);
         }
-
         .btn-buscar:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.5); }
+
+        .btn-alterna {
+            background: var(--secundary); box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4); display: none; margin-top: 10px;
+        }
+        .btn-alterna:hover { background: var(--secundary-hover); box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5); }
 
         #resultados { margin-top: 25px; padding: 20px; border-radius: 14px; display: none; animation: slideUp 0.4s ease; font-size: 14px; line-height: 1.6; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -100,6 +102,7 @@
 <div class="card">
     <div class="header">
         <h2>🌲 Rutas Turísticas</h2>
+        <p>Sistema Experto de Navegación</p>
     </div>
     
     <div class="grid-inputs">
@@ -111,6 +114,9 @@
                 <option value="morelia">Morelia</option>
                 <option value="patzcuaro">Pátzcuaro</option>
                 <option value="zamora">Zamora</option>
+                <option value="jacona">Jacona</option>
+                <option value="tangancicuaro">Tangancícuaro</option>
+                <option value="queretaro">Querétaro</option>
             </select>
         </div>
 
@@ -122,19 +128,27 @@
                 <option value="morelia">Morelia</option>
                 <option value="patzcuaro">Pátzcuaro</option>
                 <option value="zamora">Zamora</option>
+                <option value="jacona">Jacona</option>
+                <option value="tangancicuaro">Tangancícuaro</option>
+                <option value="queretaro">Querétaro</option>
             </select>
         </div>
     </div>
 
     <div class="form-group">
-        <label>💰 Presupuesto Máximo (MXN)</label>
-        <input type="number" id="presupuesto" placeholder="Ej: 500">
+        <label>💰 Presupuesto</label>
+        <div class="opciones-flex" style="margin-bottom: 10px;">
+            <label class="chip"><input type="radio" name="modo_presupuesto" value="limite" checked onchange="togglePresupuesto()"> Limite máximo</label>
+            <label class="chip"><input type="radio" name="modo_presupuesto" value="barata" onchange="togglePresupuesto()"> La más barata</label>
+        </div>
+        <input type="number" id="presupuesto_max" placeholder="Ingresa tu presupuesto (Ej: 500)">
     </div>
 
     <div class="form-group">
         <label>🛣️ Tipo de Camino</label>
         <div class="opciones-flex">
-            <label class="chip"><input type="radio" name="tipo_ruta" value="libre" checked> Libre</label>
+            <label class="chip"><input type="radio" name="tipo_ruta" value="cualquiera" checked> 🛤️ Cualquiera</label>
+            <label class="chip"><input type="radio" name="tipo_ruta" value="libre"> Libre</label>
             <label class="chip"><input type="radio" name="tipo_ruta" value="cuota"> Cuota</label>
             <label class="chip"><input type="radio" name="tipo_ruta" value="mixta"> Mixta</label>
         </div>
@@ -143,49 +157,88 @@
     <div class="form-group">
         <label>✨ Servicios Requeridos en Ruta</label>
         <div class="opciones-flex">
-            <label class="chip"><input type="checkbox" id="srv_gasolinera"> ⛽ Gasolinera</label>
-            <label class="chip"><input type="checkbox" id="srv_paradero"> 🛑 Paradero</label>
-            <label class="chip"><input type="checkbox" id="srv_turistico"> 📸 Turístico</label>
+            <label class="chip"><input type="checkbox" id="srv_cualquiera" checked onchange="toggleServicios(true)"> 🌎 Indiferente</label>
+            <label class="chip"><input type="checkbox" id="srv_gasolinera" onchange="toggleServicios(false)"> ⛽ Gasolinera</label>
+            <label class="chip"><input type="checkbox" id="srv_paradero" onchange="toggleServicios(false)"> 🛑 Paradero</label>
+            <label class="chip"><input type="checkbox" id="srv_turistico" onchange="toggleServicios(false)"> 📸 Turístico</label>
         </div>
     </div>
 
     <button class="btn-buscar" onclick="consultarBackend()">Analizar Mejores Rutas</button>
     
-    <div id="indicador-carga" class="cargando">⚙️ Cargando Informacion Del Viaje...</div>
+    <div id="indicador-carga" class="cargando">⚙️ Calculando rutas disponibles...</div>
     <div id="resultados"></div>
+    
+    <button id="btn-alterna" class="btn-buscar btn-alterna" onclick="mostrarSiguienteRuta()">🔄 Ver otra ruta alterna</button>
 </div>
 
 <script>
+    // Variables globales para guardar las rutas que nos pase Python
+    let rutasEncontradas = [];
+    let indiceRutaActual = 0;
+
+    // Lógica visual del presupuesto
+    function togglePresupuesto() {
+        const modo = document.querySelector('input[name="modo_presupuesto"]:checked').value;
+        const inputCosto = document.getElementById('presupuesto_max');
+        if(modo === 'barata') {
+            inputCosto.style.display = 'none';
+        } else {
+            inputCosto.style.display = 'block';
+        }
+    }
+
+    // Lógica visual de los servicios
+    function toggleServicios(esCualquiera) {
+        if (esCualquiera) {
+            document.getElementById('srv_gasolinera').checked = false;
+            document.getElementById('srv_paradero').checked = false;
+            document.getElementById('srv_turistico').checked = false;
+        } else {
+            document.getElementById('srv_cualquiera').checked = false;
+        }
+    }
+
     async function consultarBackend() {
         const origen = document.getElementById('origen').value;
         const destino = document.getElementById('destino').value;
-        const presupuesto = document.getElementById('presupuesto').value;
+        const modo_presupuesto = document.querySelector('input[name="modo_presupuesto"]:checked').value;
+        const presupuesto_max = document.getElementById('presupuesto_max').value;
         const tipo_ruta = document.querySelector('input[name="tipo_ruta"]:checked').value;
         
-        // Servicios según la Fase 1 del documento
+        const srv_cualquiera = document.getElementById('srv_cualquiera').checked;
         const srv_gas = document.getElementById('srv_gasolinera').checked;
         const srv_paradero = document.getElementById('srv_paradero').checked;
         const srv_turistico = document.getElementById('srv_turistico').checked;
 
         const divRes = document.getElementById('resultados');
         const divCarga = document.getElementById('indicador-carga');
+        const btnAlterna = document.getElementById('btn-alterna');
 
-        if (!origen || !destino || !presupuesto) {
-            mostrarMensaje('error', '❌ <b>Datos incompletos:</b> Debes indicar origen, destino y presupuesto máximo.');
+        // Validaciones
+        if (!origen || !destino) {
+            mostrarMensaje('error', '❌ <b>Datos incompletos:</b> Selecciona origen y destino.');
+            return;
+        }
+        if (modo_presupuesto === 'limite' && !presupuesto_max) {
+            mostrarMensaje('error', '❌ <b>Falta presupuesto:</b> Ingresa un límite o selecciona "La más barata".');
             return;
         }
 
         const datosConsulta = {
-            origen, destino, presupuesto: parseInt(presupuesto),
+            origen, 
+            destino, 
+            modo_presupuesto,
+            presupuesto_max: presupuesto_max ? parseInt(presupuesto_max) : 0,
             tipo_ruta, 
-            servicios: { gasolinera: srv_gas, paradero: srv_paradero, turistico: srv_turistico }
+            servicios: { cualquiera: srv_cualquiera, gasolinera: srv_gas, paradero: srv_paradero, turistico: srv_turistico }
         };
 
         divRes.style.display = 'none';
+        btnAlterna.style.display = 'none';
         divCarga.style.display = 'block';
 
         try {
-            // Este fetch conecta con tu servidor de Python (Flask) que llama a Prolog
             const response = await fetch('http://localhost:5000/buscar-ruta', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -195,14 +248,50 @@
             if (!response.ok) throw new Error();
 
             const res = await response.json();
-            // Muestra los resultados de forma clara [Fase 3]
-            mostrarMensaje('exito', `✅ <b>¡Análisis completado!</b><br><br>📍 <b>Trayecto:</b> ${res.mensaje_ruta}<br>💵 <b>Costo Estimado:</b> $${res.costo_total} MXN<br>🛣️ <b>Camino:</b> ${tipo_ruta.toUpperCase()}`);
+            
+            // Lógica para manejar múltiples rutas
+            if (res.rutas && res.rutas.length > 0) {
+                rutasEncontradas = res.rutas;
+                indiceRutaActual = 0; // Reiniciamos el contador
+                renderizarRuta(); // Mostramos la primera
+
+                // Si hay más de una ruta, mostramos el botón azul
+                if (rutasEncontradas.length > 1) {
+                    btnAlterna.style.display = 'block';
+                }
+            } else {
+                mostrarMensaje('error', `🛑 <b>Sin resultados:</b> No hay rutas con estas condiciones.`);
+            }
 
         } catch (e) {
-            mostrarMensaje('error', '🔌 <b>Servidor Offline:</b> La interfaz está lista para el proyecto. Asegúrate de iniciar tu servidor Python para procesar las consultas de Prolog.');
+            mostrarMensaje('error', '🔌 <b>Servidor Offline:</b> Asegúrate de iniciar tu servidor Python.');
         } finally {
             divCarga.style.display = 'none';
         }
+    }
+
+    // Función que pinta la ruta actual en pantalla
+    function renderizarRuta() {
+        const ruta = rutasEncontradas[indiceRutaActual];
+        // Indicador de qué opción estamos viendo (ej. 1 de 3)
+        const contador = `<span style="float: right; font-size: 11px; background: rgba(0,0,0,0.1); padding: 3px 8px; border-radius: 10px;">Opción ${indiceRutaActual + 1} de ${rutasEncontradas.length}</span>`;
+        
+        mostrarMensaje('exito', `
+            ${contador}
+            ✅ <b>¡Análisis completado!</b><br><br>
+            📍 <b>Trayecto:</b> ${ruta.camino}<br>
+            💵 <b>Costo Estimado:</b> $${ruta.costo} MXN
+        `);
+    }
+
+    // Función que se activa al picar el botón azul
+    function mostrarSiguienteRuta() {
+        indiceRutaActual++;
+        // Si llegamos al final de la lista, volvemos a empezar desde la 0
+        if (indiceRutaActual >= rutasEncontradas.length) {
+            indiceRutaActual = 0;
+        }
+        renderizarRuta();
     }
 
     function mostrarMensaje(clase, html) {
