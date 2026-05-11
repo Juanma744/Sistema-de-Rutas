@@ -5,11 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Experto de Rutas Turísticas</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         :root {
-            --primary: #059669; /* Verde esmeralda */
+            --primary: #059669; 
             --primary-hover: #047857;
-            --secundary: #3b82f6; /* Azul para el botón de alterna */
+            --secundary: #3b82f6; 
             --secundary-hover: #2563eb;
             --text-dark: #1f2937;
             --text-light: #4b5563;
@@ -17,30 +20,18 @@
 
         body { 
             font-family: 'Poppins', sans-serif; 
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex; 
-            justify-content: center; 
-            align-items: center;
+            margin: 0; padding: 20px; min-height: 100vh;
+            display: flex; justify-content: center; align-items: flex-start;
             box-sizing: border-box;
             background-image: url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2560'); 
-            background-size: cover; 
-            background-position: center; 
-            background-repeat: no-repeat;
-            background-attachment: fixed; 
+            background-size: cover; background-position: center; background-attachment: fixed; 
         }
 
         .card { 
-            background: rgba(255, 255, 255, 0.82); 
-            backdrop-filter: blur(15px); 
-            -webkit-backdrop-filter: blur(15px);
-            padding: 40px; 
-            border-radius: 24px; 
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            padding: 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.4);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); 
-            width: 100%; 
-            max-width: 580px; 
+            width: 100%; max-width: 850px; margin-top: 20px; margin-bottom: 20px;
         }
 
         .header { text-align: center; margin-bottom: 30px; }
@@ -49,7 +40,6 @@
 
         .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         .form-group { margin-bottom: 20px; }
-        
         label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-dark); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
 
         select, input[type="number"] { 
@@ -65,13 +55,11 @@
         }
 
         .opciones-flex { display: flex; gap: 10px; flex-wrap: wrap; }
-
         .chip {
             display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.6);
             padding: 10px 14px; border: 1px solid rgba(0,0,0,0.08); border-radius: 10px;
             cursor: pointer; transition: all 0.2s; font-size: 13px; font-weight: 600; color: var(--text-dark);
         }
-
         .chip:hover { background: #fff; border-color: var(--primary); }
         .chip input { accent-color: var(--primary); margin: 0; cursor: pointer; }
 
@@ -82,9 +70,7 @@
         }
         .btn-buscar:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.5); }
 
-        .btn-alterna {
-            background: var(--secundary); box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4); display: none; margin-top: 10px;
-        }
+        .btn-alterna { background: var(--secundary); box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4); display: none; margin-top: 15px; }
         .btn-alterna:hover { background: var(--secundary-hover); box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5); }
 
         #resultados { margin-top: 25px; padding: 20px; border-radius: 14px; display: none; animation: slideUp 0.4s ease; font-size: 14px; line-height: 1.6; }
@@ -94,7 +80,14 @@
         .error { background: rgba(254, 242, 242, 0.95); border: 1px solid #ef4444; color: #991b1b; }
         .cargando { text-align: center; color: var(--primary); font-weight: 600; display: none; margin-top: 20px; }
 
-        @media (max-width: 500px) { .grid-inputs { grid-template-columns: 1fr; } }
+        /* Contenedor del Dashboard */
+        #contenedor-graficas {
+            display: none; margin-top: 20px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;
+        }
+        .caja-grafica { background: white; padding: 15px; border-radius: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: 220px; position: relative; }
+        .caja-ancha { grid-column: 1 / -1; }
+
+        @media (max-width: 600px) { .grid-inputs { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -168,27 +161,62 @@
     
     <div id="indicador-carga" class="cargando">⚙️ Calculando rutas disponibles...</div>
     <div id="resultados"></div>
+
+    <div id="contenedor-graficas">
+        <div class="caja-grafica caja-ancha"><canvas id="graficaTrayectoria"></canvas></div>
+        <div class="caja-grafica"><canvas id="graficaCosto"></canvas></div>
+        <div class="caja-grafica"><canvas id="graficaCamino"></canvas></div>
+        <div class="caja-grafica"><canvas id="graficaParadas"></canvas></div>
+        <div class="caja-grafica"><canvas id="graficaServicios"></canvas></div>
+        <div class="caja-grafica caja-ancha"><canvas id="graficaTrayectos"></canvas></div>
+    </div>
     
     <button id="btn-alterna" class="btn-buscar btn-alterna" onclick="mostrarSiguienteRuta()">🔄 Ver otra ruta alterna</button>
 </div>
 
 <script>
-    // Variables globales para guardar las rutas que nos pase Python
     let rutasEncontradas = [];
     let indiceRutaActual = 0;
+    
+    let chartTrayectoria = null; 
+    let chartCosto = null; 
+    let chartParadas = null;
+    let chartCamino = null;
+    let chartTrayectos = null;
+    let chartServicios = null;
 
-    // Lógica visual del presupuesto
+    // BD de Servicios
+    const baseDatosServicios = {
+        'morelia': { gasolinera: 1, paradero: 1, turistico: 0 },
+        'queretaro': { gasolinera: 1, paradero: 0, turistico: 1 },
+        'patzcuaro': { gasolinera: 0, paradero: 1, turistico: 1 },
+        'zamora': { gasolinera: 0, paradero: 1, turistico: 1 },
+        'tangancicuaro': { gasolinera: 0, paradero: 0, turistico: 1 },
+        'jacona': { gasolinera: 0, paradero: 1, turistico: 0 },
+        'uruapan': { gasolinera: 1, paradero: 0, turistico: 1 }
+    };
+
+    // BD de Conexiones
+    const baseDatosConexiones = [
+        { o: 'zamora', d: 'morelia', costo: 150, tipo: 'Cuota' },
+        { o: 'zamora', d: 'morelia', costo: 99, tipo: 'Libre' },
+        { o: 'uruapan', d: 'patzcuaro', costo: 30, tipo: 'Libre' },
+        { o: 'uruapan', d: 'patzcuaro', costo: 70, tipo: 'Cuota' },
+        { o: 'zamora', d: 'jacona', costo: 0, tipo: 'Libre' },
+        { o: 'jacona', d: 'tangancicuaro', costo: 0, tipo: 'Libre' },
+        { o: 'morelia', d: 'patzcuaro', costo: 30, tipo: 'Libre' },
+        { o: 'morelia', d: 'jacona', costo: 170, tipo: 'Cuota' },
+        { o: 'morelia', d: 'tangancicuaro', costo: 70, tipo: 'Libre' },
+        { o: 'queretaro', d: 'morelia', costo: 100, tipo: 'Libre' },
+        { o: 'queretaro', d: 'morelia', costo: 300, tipo: 'Cuota' }
+    ];
+
     function togglePresupuesto() {
         const modo = document.querySelector('input[name="modo_presupuesto"]:checked').value;
         const inputCosto = document.getElementById('presupuesto_max');
-        if(modo === 'barata') {
-            inputCosto.style.display = 'none';
-        } else {
-            inputCosto.style.display = 'block';
-        }
+        inputCosto.style.display = (modo === 'barata') ? 'none' : 'block';
     }
 
-    // Lógica visual de los servicios
     function toggleServicios(esCualquiera) {
         if (esCualquiera) {
             document.getElementById('srv_gasolinera').checked = false;
@@ -214,66 +242,44 @@
         const divRes = document.getElementById('resultados');
         const divCarga = document.getElementById('indicador-carga');
         const btnAlterna = document.getElementById('btn-alterna');
+        const divGraficas = document.getElementById('contenedor-graficas');
 
-        // Validaciones
-        if (!origen || !destino) {
-            mostrarMensaje('error', '❌ <b>Datos incompletos:</b> Selecciona origen y destino.');
-            return;
-        }
-        if (modo_presupuesto === 'limite' && !presupuesto_max) {
-            mostrarMensaje('error', '❌ <b>Falta presupuesto:</b> Ingresa un límite o selecciona "La más barata".');
-            return;
-        }
+        if (!origen || !destino) return mostrarMensaje('error', '❌ Selecciona origen y destino.');
+        if (modo_presupuesto === 'limite' && !presupuesto_max) return mostrarMensaje('error', '❌ Ingresa un presupuesto.');
 
         const datosConsulta = {
-            origen, 
-            destino, 
-            modo_presupuesto,
+            origen, destino, modo_presupuesto,
             presupuesto_max: presupuesto_max ? parseInt(presupuesto_max) : 0,
             tipo_ruta, 
             servicios: { cualquiera: srv_cualquiera, gasolinera: srv_gas, paradero: srv_paradero, turistico: srv_turistico }
         };
 
-        divRes.style.display = 'none';
-        btnAlterna.style.display = 'none';
-        divCarga.style.display = 'block';
+        divRes.style.display = 'none'; btnAlterna.style.display = 'none'; divGraficas.style.display = 'none'; divCarga.style.display = 'block';
 
         try {
             const response = await fetch('http://localhost:5000/buscar-ruta', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datosConsulta)
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datosConsulta)
             });
 
             if (!response.ok) throw new Error();
-
             const res = await response.json();
             
-            // Lógica para manejar múltiples rutas
             if (res.rutas && res.rutas.length > 0) {
                 rutasEncontradas = res.rutas;
-                indiceRutaActual = 0; // Reiniciamos el contador
-                renderizarRuta(); // Mostramos la primera
-
-                // Si hay más de una ruta, mostramos el botón azul
-                if (rutasEncontradas.length > 1) {
-                    btnAlterna.style.display = 'block';
-                }
+                indiceRutaActual = 0;
+                divGraficas.style.display = 'grid'; 
+                renderizarRuta();
+                if (rutasEncontradas.length > 1) btnAlterna.style.display = 'block';
             } else {
                 mostrarMensaje('error', `🛑 <b>Sin resultados:</b> No hay rutas con estas condiciones.`);
             }
-
         } catch (e) {
             mostrarMensaje('error', '🔌 <b>Servidor Offline:</b> Asegúrate de iniciar tu servidor Python.');
-        } finally {
-            divCarga.style.display = 'none';
-        }
+        } finally { divCarga.style.display = 'none'; }
     }
 
-    // Función que pinta la ruta actual en pantalla
     function renderizarRuta() {
         const ruta = rutasEncontradas[indiceRutaActual];
-        // Indicador de qué opción estamos viendo (ej. 1 de 3)
         const contador = `<span style="float: right; font-size: 11px; background: rgba(0,0,0,0.1); padding: 3px 8px; border-radius: 10px;">Opción ${indiceRutaActual + 1} de ${rutasEncontradas.length}</span>`;
         
         mostrarMensaje('exito', `
@@ -282,23 +288,172 @@
             📍 <b>Trayecto:</b> ${ruta.camino}<br>
             💵 <b>Costo Estimado:</b> $${ruta.costo} MXN
         `);
+        dibujarDashboard(ruta);
     }
 
-    // Función que se activa al picar el botón azul
     function mostrarSiguienteRuta() {
         indiceRutaActual++;
-        // Si llegamos al final de la lista, volvemos a empezar desde la 0
-        if (indiceRutaActual >= rutasEncontradas.length) {
-            indiceRutaActual = 0;
-        }
+        if (indiceRutaActual >= rutasEncontradas.length) indiceRutaActual = 0;
         renderizarRuta();
     }
 
     function mostrarMensaje(clase, html) {
-        const div = document.getElementById('resultados');
-        div.className = clase;
-        div.innerHTML = html;
-        div.style.display = 'block';
+        const div = document.getElementById('resultados'); div.className = clase; div.innerHTML = html; div.style.display = 'block';
+    }
+
+    // ALGORITMO BLINDADO para deducir Libre/Cuota
+    function deducirTramosExactos(ciudadesRaw, costoTotal) {
+        let posiblesRutas = [];
+        let fallbackRuta = null; // Guardará la primera combinación válida por si el precio no cuadra exacto
+
+        if (ciudadesRaw.length <= 1) return []; // Retorna vacío si origen = destino (0 trayectos)
+
+        function buscarRecur(index, costoAcumulado, tramosActuales) {
+            if (index === ciudadesRaw.length - 1) {
+                if (!fallbackRuta) fallbackRuta = tramosActuales; // Aseguramos al menos un resultado visual
+                
+                // Forzamos a Number() para evitar que JavaScript se confunda si recibe strings "99" vs 99
+                if (Number(costoAcumulado) === Number(costoTotal)) {
+                    posiblesRutas.push(tramosActuales);
+                }
+                return;
+            }
+            
+            // Usamos trim() y toLowerCase() para evitar bugs por espacios ocultos o mayúsculas
+            let o = ciudadesRaw[index].trim().toLowerCase();
+            let d = ciudadesRaw[index+1].trim().toLowerCase();
+            
+            let opciones = baseDatosConexiones.filter(c => (c.o === o && c.d === d) || (c.o === d && c.d === o));
+            
+            if (opciones.length === 0) {
+                buscarRecur(index+1, costoAcumulado, [...tramosActuales, {o: ciudadesRaw[index], d: ciudadesRaw[index+1], costo: 0, tipo: 'Desconocido'}]);
+            } else {
+                for (let opc of opciones) {
+                    buscarRecur(index+1, costoAcumulado + Number(opc.costo), [...tramosActuales, {o: ciudadesRaw[index], d: ciudadesRaw[index+1], costo: Number(opc.costo), tipo: opc.tipo}]);
+                }
+            }
+        }
+        
+        buscarRecur(0, 0, []);
+        
+        if (posiblesRutas.length > 0) return posiblesRutas[0]; // Retorna la coincidencia perfecta
+        if (fallbackRuta) return fallbackRuta; // Si no halló precio exacto, da la primera opción válida
+        
+        return [];
+    }
+
+    function dibujarDashboard(ruta) {
+        if (chartTrayectoria) chartTrayectoria.destroy();
+        if (chartCosto) chartCosto.destroy();
+        if (chartParadas) chartParadas.destroy();
+        if (chartCamino) chartCamino.destroy();
+        if (chartTrayectos) chartTrayectos.destroy();
+        if (chartServicios) chartServicios.destroy();
+
+        const ciudadesRaw = ruta.camino.split(' ➔ ');
+        const numCiudades = ciudadesRaw.length;
+
+        // EJECUTAR DEDUCCIÓN DE TRAMOS
+        let tramosEvaluados = deducirTramosExactos(ciudadesRaw, ruta.costo);
+
+        // 1. Trayectoria
+        chartTrayectoria = new Chart(document.getElementById('graficaTrayectoria').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: ciudadesRaw,
+                datasets: [{
+                    label: 'Ruta', data: ciudadesRaw.map(() => 1), 
+                    borderColor: '#3b82f6', borderWidth: 3, pointBackgroundColor: '#10b981', pointBorderColor: '#059669',
+                    pointBorderWidth: 2, pointRadius: 8, pointHoverRadius: 12, fill: false, tension: 0
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, title: { display: true, text: 'Trayectoria del Viaje', font: { family: 'Poppins', size: 14 } } },
+                scales: { y: { display: false, min: 0, max: 2 }, x: { grid: { display: false }, ticks: { font: { family: 'Poppins', weight: 'bold' } } } }
+            }
+        });
+
+        // 2. Costo Total
+        chartCosto = new Chart(document.getElementById('graficaCosto').getContext('2d'), {
+            type: 'bar',
+            data: { labels: ['Costo Total'], datasets: [{ label: 'Pesos (MXN)', data: [ruta.costo], backgroundColor: 'rgba(16, 185, 129, 0.7)', borderColor: '#059669', borderWidth: 2, borderRadius: 8 }] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Gasto Total', font: { family: 'Poppins' } } }, scales: { x: { beginAtZero: true } } }
+        });
+
+        // 3. Proporción Real de Libre vs Cuota (Protegido contra gráfica en blanco)
+        let tramosLibres = tramosEvaluados.filter(t => t.tipo === 'Libre').length;
+        let tramosCuota = tramosEvaluados.filter(t => t.tipo === 'Cuota').length;
+        let tramosOtros = tramosEvaluados.filter(t => t.tipo !== 'Libre' && t.tipo !== 'Cuota').length;
+
+        // Si por alguna razón el viaje es de 0 trayectos, evitamos gráfica en blanco
+        if (tramosLibres === 0 && tramosCuota === 0 && tramosOtros === 0) {
+            tramosOtros = 1; 
+        }
+
+        chartCamino = new Chart(document.getElementById('graficaCamino').getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: ['Tramos Libres', 'Tramos de Cuota', 'Otros/Sin coste'],
+                datasets: [{
+                    data: [tramosLibres, tramosCuota, tramosOtros],
+                    backgroundColor: ['#22c55e', '#f43f5e', '#9ca3af'], 
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Tipo de Vías Utilizadas', font: { family: 'Poppins' } } }
+            }
+        });
+
+        // 4. Paradas
+        chartParadas = new Chart(document.getElementById('graficaParadas').getContext('2d'), {
+            type: 'doughnut',
+            data: { labels: ['Ciudades Visitadas', ''], datasets: [{ data: [numCiudades, 10 - numCiudades], backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(0, 0, 0, 0.05)'], borderWidth: 0, cutout: '75%' }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: `Longitud: ${numCiudades} Ciudades`, font: { family: 'Poppins' } } } }
+        });
+
+        // 5. Servicios
+        let gasData = []; let parData = []; let turData = [];
+        ciudadesRaw.forEach(ciudad => {
+            const serv = baseDatosServicios[ciudad.trim().toLowerCase()] || { gasolinera: 0, paradero: 0, turistico: 0 };
+            gasData.push(serv.gasolinera); parData.push(serv.paradero); turData.push(serv.turistico);
+        });
+        chartServicios = new Chart(document.getElementById('graficaServicios').getContext('2d'), {
+            type: 'bar',
+            data: { labels: ciudadesRaw.map(c => c.substring(0,4)+'.'), datasets: [{ label: 'Gas.', data: gasData, backgroundColor: '#ef4444' }, { label: 'Par.', data: parData, backgroundColor: '#8b5cf6' }, { label: 'Tur.', data: turData, backgroundColor: '#06b6d4' }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Servicios Disponibles', font: { family: 'Poppins' } } }, scales: { x: { stacked: true }, y: { stacked: true, display: false } } }
+        });
+
+        // 6. DESGLOSE EXACTO POR TRAMO (Preparado para 0 trayectos)
+        let nombresTramos = []; let costosTramos = []; let coloresTramos = []; let bordesTramos = [];
+
+        if (tramosEvaluados.length === 0) {
+            nombresTramos = [ciudadesRaw[0] + ' (Directo)'];
+            costosTramos = [0]; coloresTramos = ['#9ca3af']; bordesTramos = ['#4b5563'];
+        } else {
+            nombresTramos = tramosEvaluados.map(t => `${t.o.substring(0,3)} ➔ ${t.d.substring(0,3)} (${t.tipo})`);
+            costosTramos = tramosEvaluados.map(t => t.costo);
+            coloresTramos = tramosEvaluados.map(t => t.tipo === 'Libre' ? 'rgba(34, 197, 94, 0.8)' : (t.tipo === 'Cuota' ? 'rgba(244, 63, 94, 0.8)' : 'rgba(156, 163, 175, 0.8)'));
+            bordesTramos = tramosEvaluados.map(t => t.tipo === 'Libre' ? '#16a34a' : (t.tipo === 'Cuota' ? '#e11d48' : '#4b5563'));
+        }
+
+        chartTrayectos = new Chart(document.getElementById('graficaTrayectos').getContext('2d'), {
+            type: 'bar', 
+            data: {
+                labels: nombresTramos,
+                datasets: [{
+                    label: 'Costo del Tramo (MXN)', data: costosTramos,
+                    backgroundColor: coloresTramos, borderColor: bordesTramos, borderWidth: 1, borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, title: { display: true, text: 'Precio Exacto y Tipo por cada Tramo', font: { family: 'Poppins', size: 14 } } },
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Costo en $' } }, x: { ticks: { font: { family: 'Poppins', size: 11 } } } }
+            }
+        });
     }
 </script>
 

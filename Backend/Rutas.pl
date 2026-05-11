@@ -10,20 +10,20 @@ lugar(tangancicuaro).
 
 %        origen, destino, distancia, costo, tipo de camino 
 conexion(zamora, morelia, 150, 150, cuota).
-conexion(zamora, morelia, 200, 99, libre).
+conexion(zamora, morelia, 200, 0, libre).
 
-conexion(uruapan, patzcuaro, 180, 30, libre).
+conexion(uruapan, patzcuaro, 180, 0, libre).
 conexion(uruapan, patzcuaro, 100, 70, cuota).
 
 conexion(zamora, jacona, 5, 0, libre).
 conexion(jacona, tangancicuaro, 20, 0, libre).
 
-conexion(morelia, patzcuaro, 60, 30, libre).
+conexion(morelia, patzcuaro, 60, 0, libre).
 conexion(morelia, jacona, 190, 170, cuota).
 
-conexion(morelia, tangancicuaro, 130, 70, libre).
+conexion(morelia, tangancicuaro, 130, 0, libre).
 
-conexion(queretaro, morelia, 600, 100, libre).
+conexion(queretaro, morelia, 600, 0, libre).
 conexion(queretaro, morelia, 400, 300, cuota).
 
 servicio(morelia, gasolinera).
