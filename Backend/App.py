@@ -2,76 +2,97 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pyswip import Prolog
 
-# Configuramos el servidor
 app = Flask(__name__)
-CORS(app) 
+CORS(app)
 
-# Inicializamos Prolog y leemos tu archivo (suponiendo que ya están en la misma carpeta)
 prolog = Prolog()
 prolog.consult("Rutas.pl")
+
+def checar_servicio(ciudad, tipo):
+    """Verifica si una ciudad tiene un servicio específico en Prolog"""
+    return bool(list(prolog.query(f"servicio({ciudad.lower()}, {tipo.lower()})")))
 
 @app.route('/buscar-ruta', methods=['POST'])
 def buscar_ruta():
     datos = request.json
-    origen = datos['origen']
-    destino = datos['destino']
-    modo_presupuesto = datos['modo_presupuesto']
-    presupuesto_max = datos['presupuesto_max']
-    tipo_ruta = datos['tipo_ruta']
+    origen = datos['origen'].lower()
+    destino = datos['destino'].lower()
+    modo_p = datos['modo_presupuesto']
+    pres_max = datos.get('presupuesto_max', 0)
+    tipo_camino = datos['tipo_ruta']
     servicios = datos['servicios']
 
-    # 1. SIEMPRE usamos la regla normal primero para que soporte todos los filtros
-    consulta = f"ruta_con_costo({origen}, {destino}, Ruta, Costo, _)"
-
-    # 2. Si eligió un límite, lo agregamos a la consulta
-    if modo_presupuesto == 'limite':
-        consulta += f", Costo =< {presupuesto_max}"
-
-    # 3. Filtros de tipo de camino
-    if tipo_ruta == 'libre':
-        consulta += ", todos_libres(Ruta)"
-    elif tipo_ruta == 'cuota':
-        consulta += ", todos_cuota(Ruta)"
-    elif tipo_ruta == 'mixta':
-        consulta += ", \\+ todos_libres(Ruta), \\+ todos_cuota(Ruta)"
-
-    # 4. Filtros de servicios
-    if not servicios['cualquiera']:
-        if servicios['gasolinera']:
-            consulta += ", member(L1, Ruta), servicio(L1, gasolinera)"
-        if servicios['paradero']:
-            consulta += ", member(L2, Ruta), servicio(L2, paradero)"
-        if servicios['turistico']:
-            consulta += ", member(L3, Ruta), servicio(L3, turistico)"
-
-    print(f"Preguntando a Prolog: ?- {consulta}.")
-
-    try:
-        # 5. Sacamos todas las rutas filtradas
-        resultados = list(prolog.query(consulta))
-        rutas_formateadas = []
-        
-        if resultados:
-            for res in resultados:
-                nombres = " ➔ ".join([str(ciudad).capitalize() for ciudad in res['Ruta']])
-                rutas_formateadas.append({
-                    "camino": nombres,
-                    "costo": res['Costo']
-                })
-            
-            # MAGIA 3: Si pidió la más barata, Python ordena la lista de menor a mayor precio
-            if modo_presupuesto == 'barata':
-                # Ordenamos usando el costo y nos quedamos solo con la posición [0] (la ganadora)
-                rutas_formateadas = sorted(rutas_formateadas, key=lambda x: x['costo'])
-                rutas_formateadas = [rutas_formateadas[0]]
-                
-            return jsonify({"rutas": rutas_formateadas})
-        else:
-            return jsonify({"rutas": []})
-            
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    query = f"ruta_completa({origen}, {destino}, Ruta, Costo, DistTotal, Tipos, Costos, Dists)"
     
+    try:
+        resultados = list(prolog.query(query))
+        rutas_formateadas = []
+
+        if not resultados:
+            return jsonify({"rutas": []})
+
+        for res in resultados:
+            camino = [str(c) for c in res['Ruta']]
+            tipos = [str(t) for t in res['Tipos']]
+            costos_lista = res['Costos']
+            distancias_lista = res['Dists']
+            costo_total = res['Costo']
+
+            # Filtros de tipo de camino
+            if tipo_camino == 'libre' and 'cuota' in tipos: continue
+            if tipo_camino == 'cuota' and 'libre' in tipos: continue
+            if tipo_camino == 'mixta' and not ('libre' in tipos and 'cuota' in tipos): continue
+            
+            # Filtro de presupuesto
+            if modo_p == 'limite' and costo_total > pres_max: continue
+
+            # Filtro de servicios mínimos
+            cumple_servicios = True
+            if not servicios.get('cualquiera', True):
+                for s_nombre, activado in servicios.items():
+                    if activado and s_nombre != 'cualquiera':
+                        if not any(checar_servicio(c, s_nombre) for c in camino):
+                            cumple_servicios = False
+                            break
+            if not cumple_servicios: continue
+
+            # Recolectar info de ciudades para la gráfica de servicios
+            ciudades_detalladas = []
+            for c in camino:
+                servs_prolog = list(prolog.query(f"servicio({c.lower()}, S)"))
+                ciudades_detalladas.append({
+                    "nombre": c.capitalize(),
+                    "servicios": [s['S'] for s in servs_prolog]
+                })
+
+            # Construir tramos exactos
+            tramos_detallados = []
+            for i in range(len(tipos)):
+                tramos_detallados.append({
+                    "o": camino[i].capitalize(),
+                    "d": camino[i+1].capitalize(),
+                    "tipo": tipos[i].capitalize(),
+                    "costo": costos_lista[i],
+                    "distancia": distancias_lista[i]
+                })
+
+            rutas_formateadas.append({
+                "camino": " ➔ ".join([c.capitalize() for c in camino]),
+                "costo": costo_total,
+                "distanciaTotal": res['DistTotal'],
+                "tramos": tramos_detallados,
+                "ciudades": ciudades_detalladas
+            })
+
+        rutas_formateadas = sorted(rutas_formateadas, key=lambda x: x['costo'])
+        if modo_p == 'barata' and rutas_formateadas:
+            rutas_formateadas = [rutas_formateadas[0]]
+
+        return jsonify({"rutas": rutas_formateadas})
+
+    except Exception as e:
+        print(f"Error detectado en App.py: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

@@ -3,459 +3,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Experto de Rutas Turísticas</title>
+    <title>Sistema Experto de Rutas</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        :root {
-            --primary: #059669; 
-            --primary-hover: #047857;
-            --secundary: #3b82f6; 
-            --secundary-hover: #2563eb;
-            --text-dark: #1f2937;
-            --text-light: #4b5563;
-        }
-
+        :root { --primary: #059669; --secundary: #3b82f6; --text: #1f2937; }
         body { 
-            font-family: 'Poppins', sans-serif; 
-            margin: 0; padding: 20px; min-height: 100vh;
-            display: flex; justify-content: center; align-items: flex-start;
-            box-sizing: border-box;
-            background-image: url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2560'); 
-            background-size: cover; background-position: center; background-attachment: fixed; 
+            font-family: 'Poppins', sans-serif; margin: 0; padding: 20px;
+            background: url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2560') center/cover fixed;
+            display: flex; justify-content: center;
         }
-
         .card { 
-            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            padding: 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); 
-            width: 100%; max-width: 850px; margin-top: 20px; margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(15px); 
+            padding: 35px; border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            width: 100%; max-width: 950px; 
         }
-
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h2 { color: var(--text-dark); margin: 0; font-size: 28px; font-weight: 700; }
-        .header p { color: var(--text-light); margin-top: 5px; font-size: 14px; font-weight: 500; }
-
-        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-dark); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        select, input[type="number"] { 
-            width: 100%; padding: 12px 15px; border: 1px solid rgba(0,0,0,0.1); 
-            border-radius: 12px; box-sizing: border-box; font-size: 15px; 
-            font-family: 'Poppins', sans-serif; transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.7);
-        }
-
-        select:focus, input[type="number"]:focus {
-            outline: none; border-color: var(--primary); background: #fff;
-            box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.15);
-        }
-
-        .opciones-flex { display: flex; gap: 10px; flex-wrap: wrap; }
-        .chip {
-            display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.6);
-            padding: 10px 14px; border: 1px solid rgba(0,0,0,0.08); border-radius: 10px;
-            cursor: pointer; transition: all 0.2s; font-size: 13px; font-weight: 600; color: var(--text-dark);
-        }
-        .chip:hover { background: #fff; border-color: var(--primary); }
-        .chip input { accent-color: var(--primary); margin: 0; cursor: pointer; }
-
-        .btn-buscar { 
-            width: 100%; background: var(--primary); color: white; padding: 18px; border: none; 
-            border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; 
-            transition: all 0.3s; margin-top: 10px; box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.4);
-        }
-        .btn-buscar:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.5); }
-
-        .btn-alterna { background: var(--secundary); box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4); display: none; margin-top: 15px; }
-        .btn-alterna:hover { background: var(--secundary-hover); box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5); }
-
-        #resultados { margin-top: 25px; padding: 20px; border-radius: 14px; display: none; animation: slideUp 0.4s ease; font-size: 14px; line-height: 1.6; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        .exito { background: rgba(236, 253, 245, 0.95); border: 1px solid #10b981; color: #065f46; }
-        .error { background: rgba(254, 242, 242, 0.95); border: 1px solid #ef4444; color: #991b1b; }
-        .cargando { text-align: center; color: var(--primary); font-weight: 600; display: none; margin-top: 20px; }
-
-        /* Contenedor del Dashboard */
-        #contenedor-graficas {
-            display: none; margin-top: 20px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;
-        }
-        .caja-grafica { background: white; padding: 15px; border-radius: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: 220px; position: relative; }
-        .caja-ancha { grid-column: 1 / -1; }
-
-        @media (max-width: 600px) { .grid-inputs { grid-template-columns: 1fr; } }
+        .header { text-align: center; margin-bottom: 25px; }
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text); font-size: 13px; text-transform: uppercase; }
+        select, input[type="number"] { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ddd; box-sizing: border-box; }
+        .opciones-flex { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .chip { background: #f3f4f6; padding: 10px 15px; border-radius: 12px; cursor: pointer; font-size: 14px; border: 1px solid #ddd; display: flex; align-items: center; gap: 8px; font-weight: 500; transition: 0.2s; }
+        .btn-buscar { width: 100%; background: var(--primary); color: white; padding: 18px; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 20px; }
+        #resultados { margin-top: 20px; padding: 20px; border-radius: 14px; display: none; border: 1px solid #10b981; background: #ecfdf5; color: #065f46; line-height: 1.6; }
+        
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; display: none; }
+        .chart-box { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee; height: 320px; position: relative; }
+        .chart-box.full-width { grid-column: 1 / -1; height: 350px; }
+        .chart-box h3 { font-size: 13px; margin: 0 0 10px 0; color: var(--text); text-align: center; }
+        
+        @media (max-width: 800px) { .grid-inputs, .dashboard { grid-template-columns: 1fr; } .chart-box.full-width { grid-column: auto; } }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div class="header">
-        <h2>🌲 Rutas Turísticas</h2>
-        <p>Sistema Experto de Navegación</p>
+        <h2>🌲 Sistema Experto de Rutas</h2>
+        <p>Análisis de trayectos y costos corregidos</p>
     </div>
-    
+
     <div class="grid-inputs">
-        <div class="form-group">
+        <div>
             <label>📍 Ciudad Origen</label>
             <select id="origen">
-                <option value="">Seleccionar...</option>
-                <option value="uruapan">Uruapan</option>
+                <option value="zamora" selected>Zamora</option>
                 <option value="morelia">Morelia</option>
-                <option value="patzcuaro">Pátzcuaro</option>
-                <option value="zamora">Zamora</option>
-                <option value="jacona">Jacona</option>
-                <option value="tangancicuaro">Tangancícuaro</option>
                 <option value="queretaro">Querétaro</option>
+                <option value="jacona">Jacona</option>
+                <option value="uruapan">Uruapan</option>
+                <option value="patzcuaro">Pátzcuaro</option>
+                <option value="tangancicuaro">Tangancícuaro</option>
             </select>
         </div>
-
-        <div class="form-group">
+        <div>
             <label>🎯 Ciudad Destino</label>
             <select id="destino">
-                <option value="">Seleccionar...</option>
-                <option value="uruapan">Uruapan</option>
-                <option value="morelia">Morelia</option>
-                <option value="patzcuaro">Pátzcuaro</option>
+                <option value="queretaro" selected>Querétaro</option>
                 <option value="zamora">Zamora</option>
+                <option value="morelia">Morelia</option>
                 <option value="jacona">Jacona</option>
+                <option value="uruapan">Uruapan</option>
+                <option value="patzcuaro">Pátzcuaro</option>
                 <option value="tangancicuaro">Tangancícuaro</option>
-                <option value="queretaro">Querétaro</option>
             </select>
         </div>
     </div>
 
-    <div class="form-group">
+    <div style="margin-top: 20px;">
         <label>💰 Presupuesto</label>
-        <div class="opciones-flex" style="margin-bottom: 10px;">
-            <label class="chip"><input type="radio" name="modo_presupuesto" value="limite" checked onchange="togglePresupuesto()"> Limite máximo</label>
-            <label class="chip"><input type="radio" name="modo_presupuesto" value="barata" onchange="togglePresupuesto()"> La más barata</label>
+        <div class="opciones-flex">
+            <label class="chip"><input type="radio" name="modo_p" value="limite" checked onchange="toggleP()"> 💵 Límite Máximo</label>
+            <label class="chip"><input type="radio" name="modo_p" value="barata" onchange="toggleP()"> 🏷️ La más barata</label>
         </div>
-        <input type="number" id="presupuesto_max" placeholder="Ingresa tu presupuesto (Ej: 500)">
+        <div id="c_pres">
+            <input type="number" id="pres_max" value="1000">
+        </div>
     </div>
 
-    <div class="form-group">
+    <div style="margin-top: 20px;">
         <label>🛣️ Tipo de Camino</label>
         <div class="opciones-flex">
-            <label class="chip"><input type="radio" name="tipo_ruta" value="cualquiera" checked> 🛤️ Cualquiera</label>
-            <label class="chip"><input type="radio" name="tipo_ruta" value="libre"> Libre</label>
-            <label class="chip"><input type="radio" name="tipo_ruta" value="cuota"> Cuota</label>
-            <label class="chip"><input type="radio" name="tipo_ruta" value="mixta"> Mixta</label>
+            <label class="chip"><input type="radio" name="tipo_r" value="cualquiera" checked> 🛤️ Cualquiera</label>
+            <label class="chip"><input type="radio" name="tipo_r" value="libre"> 🌿 Libre</label>
+            <label class="chip"><input type="radio" name="tipo_r" value="cuota"> 🛣️ Cuota</label>
+            <label class="chip"><input type="radio" name="tipo_r" value="mixta"> 🔄 Mixta</label>
         </div>
     </div>
 
-    <div class="form-group">
-        <label>✨ Servicios Requeridos en Ruta</label>
+    <div style="margin-top: 20px;">
+        <label>✨ Servicios Mínimos en Ruta</label>
         <div class="opciones-flex">
-            <label class="chip"><input type="checkbox" id="srv_cualquiera" checked onchange="toggleServicios(true)"> 🌎 Indiferente</label>
-            <label class="chip"><input type="checkbox" id="srv_gasolinera" onchange="toggleServicios(false)"> ⛽ Gasolinera</label>
-            <label class="chip"><input type="checkbox" id="srv_paradero" onchange="toggleServicios(false)"> 🛑 Paradero</label>
-            <label class="chip"><input type="checkbox" id="srv_turistico" onchange="toggleServicios(false)"> 📸 Turístico</label>
+            <label class="chip"><input type="checkbox" id="srv_c" checked onchange="clickS(true)"> 🌎 Indiferente</label>
+            <label class="chip"><input type="checkbox" id="srv_g" onchange="clickS(false)"> ⛽ Gasolinera</label>
+            <label class="chip"><input type="checkbox" id="srv_p" onchange="clickS(false)"> 🛑 Paradero</label>
+            <label class="chip"><input type="checkbox" id="srv_t" onchange="clickS(false)"> 📸 Turístico</label>
         </div>
     </div>
 
-    <button class="btn-buscar" onclick="consultarBackend()">Analizar Mejores Rutas</button>
+    <button class="btn-buscar" onclick="consultar()">Analizar Mejores Rutas</button>
     
-    <div id="indicador-carga" class="cargando">⚙️ Calculando rutas disponibles...</div>
     <div id="resultados"></div>
 
-    <div id="contenedor-graficas">
-        <div class="caja-grafica caja-ancha"><canvas id="graficaTrayectoria"></canvas></div>
-        <div class="caja-grafica"><canvas id="graficaCosto"></canvas></div>
-        <div class="caja-grafica"><canvas id="graficaCamino"></canvas></div>
-        <div class="caja-grafica"><canvas id="graficaParadas"></canvas></div>
-        <div class="caja-grafica"><canvas id="graficaServicios"></canvas></div>
-        <div class="caja-grafica caja-ancha"><canvas id="graficaTrayectos"></canvas></div>
+    <div class="dashboard" id="dashboard">
+        <!-- Gráfica de Costo por Tramo -->
+        <div class="chart-box full-width">
+            <h3>📊 COSTO DEL TRAMO (MXN)</h3>
+            <canvas id="cTramo"></canvas>
+        </div>
+        
+        <div class="chart-box">
+            <h3>💰 COMPARATIVA COSTO TOTAL</h3>
+            <canvas id="cCostos"></canvas>
+        </div>
+        <div class="chart-box">
+            <h3>🛤️ VÍAS UTILIZADAS</h3>
+            <canvas id="cVias"></canvas>
+        </div>
+        <div class="chart-box full-width">
+            <h3>✨ SERVICIOS DISPONIBLES</h3>
+            <canvas id="cSrv"></canvas>
+        </div>
     </div>
-    
-    <button id="btn-alterna" class="btn-buscar btn-alterna" onclick="mostrarSiguienteRuta()">🔄 Ver otra ruta alterna</button>
+
+    <button id="btn-alt" class="btn-buscar" style="background:var(--secundary); display:none;" onclick="siguiente()">🔄 Ver otra ruta alterna</button>
 </div>
 
 <script>
-    let rutasEncontradas = [];
-    let indiceRutaActual = 0;
-    
-    let chartTrayectoria = null; 
-    let chartCosto = null; 
-    let chartParadas = null;
-    let chartCamino = null;
-    let chartTrayectos = null;
-    let chartServicios = null;
+    let rutas = []; let idx = 0; let charts = {};
 
-    // BD de Servicios
-    const baseDatosServicios = {
-        'morelia': { gasolinera: 1, paradero: 1, turistico: 0 },
-        'queretaro': { gasolinera: 1, paradero: 0, turistico: 1 },
-        'patzcuaro': { gasolinera: 0, paradero: 1, turistico: 1 },
-        'zamora': { gasolinera: 0, paradero: 1, turistico: 1 },
-        'tangancicuaro': { gasolinera: 0, paradero: 0, turistico: 1 },
-        'jacona': { gasolinera: 0, paradero: 1, turistico: 0 },
-        'uruapan': { gasolinera: 1, paradero: 0, turistico: 1 }
-    };
-
-    // BD de Conexiones
-    const baseDatosConexiones = [
-        { o: 'zamora', d: 'morelia', costo: 150, tipo: 'Cuota' },
-        { o: 'zamora', d: 'morelia', costo: 99, tipo: 'Libre' },
-        { o: 'uruapan', d: 'patzcuaro', costo: 30, tipo: 'Libre' },
-        { o: 'uruapan', d: 'patzcuaro', costo: 70, tipo: 'Cuota' },
-        { o: 'zamora', d: 'jacona', costo: 0, tipo: 'Libre' },
-        { o: 'jacona', d: 'tangancicuaro', costo: 0, tipo: 'Libre' },
-        { o: 'morelia', d: 'patzcuaro', costo: 30, tipo: 'Libre' },
-        { o: 'morelia', d: 'jacona', costo: 170, tipo: 'Cuota' },
-        { o: 'morelia', d: 'tangancicuaro', costo: 70, tipo: 'Libre' },
-        { o: 'queretaro', d: 'morelia', costo: 100, tipo: 'Libre' },
-        { o: 'queretaro', d: 'morelia', costo: 300, tipo: 'Cuota' }
-    ];
-
-    function togglePresupuesto() {
-        const modo = document.querySelector('input[name="modo_presupuesto"]:checked').value;
-        const inputCosto = document.getElementById('presupuesto_max');
-        inputCosto.style.display = (modo === 'barata') ? 'none' : 'block';
+    function toggleP() {
+        const m = document.querySelector('input[name="modo_p"]:checked').value;
+        document.getElementById('c_pres').style.display = (m === 'barata') ? 'none' : 'block';
     }
 
-    function toggleServicios(esCualquiera) {
-        if (esCualquiera) {
-            document.getElementById('srv_gasolinera').checked = false;
-            document.getElementById('srv_paradero').checked = false;
-            document.getElementById('srv_turistico').checked = false;
+    function clickS(ind) {
+        if(ind) {
+            document.getElementById('srv_g').checked = false;
+            document.getElementById('srv_p').checked = false;
+            document.getElementById('srv_t').checked = false;
         } else {
-            document.getElementById('srv_cualquiera').checked = false;
+            document.getElementById('srv_c').checked = false;
         }
     }
 
-    async function consultarBackend() {
-        const origen = document.getElementById('origen').value;
-        const destino = document.getElementById('destino').value;
-        const modo_presupuesto = document.querySelector('input[name="modo_presupuesto"]:checked').value;
-        const presupuesto_max = document.getElementById('presupuesto_max').value;
-        const tipo_ruta = document.querySelector('input[name="tipo_ruta"]:checked').value;
-        
-        const srv_cualquiera = document.getElementById('srv_cualquiera').checked;
-        const srv_gas = document.getElementById('srv_gasolinera').checked;
-        const srv_paradero = document.getElementById('srv_paradero').checked;
-        const srv_turistico = document.getElementById('srv_turistico').checked;
-
-        const divRes = document.getElementById('resultados');
-        const divCarga = document.getElementById('indicador-carga');
-        const btnAlterna = document.getElementById('btn-alterna');
-        const divGraficas = document.getElementById('contenedor-graficas');
-
-        if (!origen || !destino) return mostrarMensaje('error', '❌ Selecciona origen y destino.');
-        if (modo_presupuesto === 'limite' && !presupuesto_max) return mostrarMensaje('error', '❌ Ingresa un presupuesto.');
-
-        const datosConsulta = {
-            origen, destino, modo_presupuesto,
-            presupuesto_max: presupuesto_max ? parseInt(presupuesto_max) : 0,
-            tipo_ruta, 
-            servicios: { cualquiera: srv_cualquiera, gasolinera: srv_gas, paradero: srv_paradero, turistico: srv_turistico }
+    async function consultar() {
+        const payload = {
+            origen: document.getElementById('origen').value,
+            destino: document.getElementById('destino').value,
+            modo_presupuesto: document.querySelector('input[name="modo_p"]:checked').value,
+            presupuesto_max: parseInt(document.getElementById('pres_max').value) || 0,
+            tipo_ruta: document.querySelector('input[name="tipo_r"]:checked').value,
+            servicios: {
+                cualquiera: document.getElementById('srv_c').checked,
+                gasolinera: document.getElementById('srv_g').checked,
+                paradero: document.getElementById('srv_p').checked,
+                turistico: document.getElementById('srv_t').checked
+            }
         };
 
-        divRes.style.display = 'none'; btnAlterna.style.display = 'none'; divGraficas.style.display = 'none'; divCarga.style.display = 'block';
-
         try {
-            const response = await fetch('http://localhost:5000/buscar-ruta', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datosConsulta)
+            const res = await fetch('http://localhost:5000/buscar-ruta', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
             });
-
-            if (!response.ok) throw new Error();
-            const res = await response.json();
-            
-            if (res.rutas && res.rutas.length > 0) {
-                rutasEncontradas = res.rutas;
-                indiceRutaActual = 0;
-                divGraficas.style.display = 'grid'; 
-                renderizarRuta();
-                if (rutasEncontradas.length > 1) btnAlterna.style.display = 'block';
+            const data = await res.json();
+            if (data.rutas && data.rutas.length > 0) {
+                rutas = data.rutas; idx = 0;
+                document.getElementById('dashboard').style.display = 'grid';
+                mostrar();
             } else {
-                mostrarMensaje('error', `🛑 <b>Sin resultados:</b> No hay rutas con estas condiciones.`);
+                alert("No se encontraron rutas con estas condiciones.");
+                document.getElementById('resultados').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'none';
             }
-        } catch (e) {
-            mostrarMensaje('error', '🔌 <b>Servidor Offline:</b> Asegúrate de iniciar tu servidor Python.');
-        } finally { divCarga.style.display = 'none'; }
+        } catch (e) { alert("Error: El servidor no responde."); }
     }
 
-    function renderizarRuta() {
-        const ruta = rutasEncontradas[indiceRutaActual];
-        const contador = `<span style="float: right; font-size: 11px; background: rgba(0,0,0,0.1); padding: 3px 8px; border-radius: 10px;">Opción ${indiceRutaActual + 1} de ${rutasEncontradas.length}</span>`;
+    function mostrar() {
+        const r = rutas[idx];
+        const resDiv = document.getElementById('resultados');
+        resDiv.style.display = 'block';
+        resDiv.innerHTML = `✅ <b>Opción ${idx+1} de ${rutas.length}</b><br>
+                            📍 <b>Trayecto:</b> ${r.camino}<br>
+                            💵 <b>Costo:</b> $${r.costo} MXN | 📏 <b>Distancia Total:</b> ${r.distanciaTotal} km`;
         
-        mostrarMensaje('exito', `
-            ${contador}
-            ✅ <b>¡Análisis completado!</b><br><br>
-            📍 <b>Trayecto:</b> ${ruta.camino}<br>
-            💵 <b>Costo Estimado:</b> $${ruta.costo} MXN
-        `);
-        dibujarDashboard(ruta);
+        document.getElementById('btn-alt').style.display = rutas.length > 1 ? 'block' : 'none';
+        render(r);
     }
 
-    function mostrarSiguienteRuta() {
-        indiceRutaActual++;
-        if (indiceRutaActual >= rutasEncontradas.length) indiceRutaActual = 0;
-        renderizarRuta();
+    function render(ruta) {
+        // 1. GRAFICA COSTO POR TRAMO
+        gen('cTramo', 'bar', 'Costo por Tramo ($)', 
+            ruta.tramos.map(t => `${t.o} ➔ ${t.d} (${t.tipo})`),
+            ruta.tramos.map(t => t.costo), 
+            ruta.tramos.map(t => t.tipo === 'Libre' ? '#10b981' : '#ef4444'));
+
+        // 2. COMPARATIVA TOTAL
+        gen('cCostos', 'bar', 'Costo Total', 
+            rutas.map((_, i) => `Ruta ${i+1}`), 
+            rutas.map(x => x.costo), 
+            rutas.map((_, i) => i === idx ? '#059669' : '#d1d5db'));
+
+        // 3. VÍAS
+        const libs = ruta.tramos.filter(t => t.tipo === 'Libre').length;
+        const cuos = ruta.tramos.filter(t => t.tipo === 'Cuota').length;
+        gen('cVias', 'pie', 'Vías', ['Libre', 'Cuota'], [libs, cuos], ['#10b981', '#ef4444']);
+
+        // 4. SERVICIOS
+        gen('cSrv', 'bar', 'Servicios', ruta.ciudades.map(c => c.nombre), [
+            { label: '⛽ Gas', data: ruta.ciudades.map(c => c.servicios.includes('gasolinera')?1:0), backgroundColor: '#fbbf24' },
+            { label: '🛑 Paradero', data: ruta.ciudades.map(c => c.servicios.includes('paradero')?1:0), backgroundColor: '#f87171' },
+            { label: '📸 Turístico', data: ruta.ciudades.map(c => c.servicios.includes('turistico')?1:0), backgroundColor: '#818cf8' }
+        ]);
     }
 
-    function mostrarMensaje(clase, html) {
-        const div = document.getElementById('resultados'); div.className = clase; div.innerHTML = html; div.style.display = 'block';
+    function gen(id, type, label, labels, data, colors) {
+        if (charts[id]) charts[id].destroy();
+        const config = {
+            type, data: { labels, datasets: Array.isArray(data) && typeof data[0] === 'object' ? data : [{ label, data, backgroundColor: colors, borderColor: colors, tension: 0.3, fill: true }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: label } } }
+        };
+        charts[id] = new Chart(document.getElementById(id), config);
     }
 
-    // ALGORITMO BLINDADO para deducir Libre/Cuota
-    function deducirTramosExactos(ciudadesRaw, costoTotal) {
-        let posiblesRutas = [];
-        let fallbackRuta = null; // Guardará la primera combinación válida por si el precio no cuadra exacto
-
-        if (ciudadesRaw.length <= 1) return []; // Retorna vacío si origen = destino (0 trayectos)
-
-        function buscarRecur(index, costoAcumulado, tramosActuales) {
-            if (index === ciudadesRaw.length - 1) {
-                if (!fallbackRuta) fallbackRuta = tramosActuales; // Aseguramos al menos un resultado visual
-                
-                // Forzamos a Number() para evitar que JavaScript se confunda si recibe strings "99" vs 99
-                if (Number(costoAcumulado) === Number(costoTotal)) {
-                    posiblesRutas.push(tramosActuales);
-                }
-                return;
-            }
-            
-            // Usamos trim() y toLowerCase() para evitar bugs por espacios ocultos o mayúsculas
-            let o = ciudadesRaw[index].trim().toLowerCase();
-            let d = ciudadesRaw[index+1].trim().toLowerCase();
-            
-            let opciones = baseDatosConexiones.filter(c => (c.o === o && c.d === d) || (c.o === d && c.d === o));
-            
-            if (opciones.length === 0) {
-                buscarRecur(index+1, costoAcumulado, [...tramosActuales, {o: ciudadesRaw[index], d: ciudadesRaw[index+1], costo: 0, tipo: 'Desconocido'}]);
-            } else {
-                for (let opc of opciones) {
-                    buscarRecur(index+1, costoAcumulado + Number(opc.costo), [...tramosActuales, {o: ciudadesRaw[index], d: ciudadesRaw[index+1], costo: Number(opc.costo), tipo: opc.tipo}]);
-                }
-            }
-        }
-        
-        buscarRecur(0, 0, []);
-        
-        if (posiblesRutas.length > 0) return posiblesRutas[0]; // Retorna la coincidencia perfecta
-        if (fallbackRuta) return fallbackRuta; // Si no halló precio exacto, da la primera opción válida
-        
-        return [];
-    }
-
-    function dibujarDashboard(ruta) {
-        if (chartTrayectoria) chartTrayectoria.destroy();
-        if (chartCosto) chartCosto.destroy();
-        if (chartParadas) chartParadas.destroy();
-        if (chartCamino) chartCamino.destroy();
-        if (chartTrayectos) chartTrayectos.destroy();
-        if (chartServicios) chartServicios.destroy();
-
-        const ciudadesRaw = ruta.camino.split(' ➔ ');
-        const numCiudades = ciudadesRaw.length;
-
-        // EJECUTAR DEDUCCIÓN DE TRAMOS
-        let tramosEvaluados = deducirTramosExactos(ciudadesRaw, ruta.costo);
-
-        // 1. Trayectoria
-        chartTrayectoria = new Chart(document.getElementById('graficaTrayectoria').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: ciudadesRaw,
-                datasets: [{
-                    label: 'Ruta', data: ciudadesRaw.map(() => 1), 
-                    borderColor: '#3b82f6', borderWidth: 3, pointBackgroundColor: '#10b981', pointBorderColor: '#059669',
-                    pointBorderWidth: 2, pointRadius: 8, pointHoverRadius: 12, fill: false, tension: 0
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false }, title: { display: true, text: 'Trayectoria del Viaje', font: { family: 'Poppins', size: 14 } } },
-                scales: { y: { display: false, min: 0, max: 2 }, x: { grid: { display: false }, ticks: { font: { family: 'Poppins', weight: 'bold' } } } }
-            }
-        });
-
-        // 2. Costo Total
-        chartCosto = new Chart(document.getElementById('graficaCosto').getContext('2d'), {
-            type: 'bar',
-            data: { labels: ['Costo Total'], datasets: [{ label: 'Pesos (MXN)', data: [ruta.costo], backgroundColor: 'rgba(16, 185, 129, 0.7)', borderColor: '#059669', borderWidth: 2, borderRadius: 8 }] },
-            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Gasto Total', font: { family: 'Poppins' } } }, scales: { x: { beginAtZero: true } } }
-        });
-
-        // 3. Proporción Real de Libre vs Cuota (Protegido contra gráfica en blanco)
-        let tramosLibres = tramosEvaluados.filter(t => t.tipo === 'Libre').length;
-        let tramosCuota = tramosEvaluados.filter(t => t.tipo === 'Cuota').length;
-        let tramosOtros = tramosEvaluados.filter(t => t.tipo !== 'Libre' && t.tipo !== 'Cuota').length;
-
-        // Si por alguna razón el viaje es de 0 trayectos, evitamos gráfica en blanco
-        if (tramosLibres === 0 && tramosCuota === 0 && tramosOtros === 0) {
-            tramosOtros = 1; 
-        }
-
-        chartCamino = new Chart(document.getElementById('graficaCamino').getContext('2d'), {
-            type: 'pie',
-            data: {
-                labels: ['Tramos Libres', 'Tramos de Cuota', 'Otros/Sin coste'],
-                datasets: [{
-                    data: [tramosLibres, tramosCuota, tramosOtros],
-                    backgroundColor: ['#22c55e', '#f43f5e', '#9ca3af'], 
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Tipo de Vías Utilizadas', font: { family: 'Poppins' } } }
-            }
-        });
-
-        // 4. Paradas
-        chartParadas = new Chart(document.getElementById('graficaParadas').getContext('2d'), {
-            type: 'doughnut',
-            data: { labels: ['Ciudades Visitadas', ''], datasets: [{ data: [numCiudades, 10 - numCiudades], backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(0, 0, 0, 0.05)'], borderWidth: 0, cutout: '75%' }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: `Longitud: ${numCiudades} Ciudades`, font: { family: 'Poppins' } } } }
-        });
-
-        // 5. Servicios
-        let gasData = []; let parData = []; let turData = [];
-        ciudadesRaw.forEach(ciudad => {
-            const serv = baseDatosServicios[ciudad.trim().toLowerCase()] || { gasolinera: 0, paradero: 0, turistico: 0 };
-            gasData.push(serv.gasolinera); parData.push(serv.paradero); turData.push(serv.turistico);
-        });
-        chartServicios = new Chart(document.getElementById('graficaServicios').getContext('2d'), {
-            type: 'bar',
-            data: { labels: ciudadesRaw.map(c => c.substring(0,4)+'.'), datasets: [{ label: 'Gas.', data: gasData, backgroundColor: '#ef4444' }, { label: 'Par.', data: parData, backgroundColor: '#8b5cf6' }, { label: 'Tur.', data: turData, backgroundColor: '#06b6d4' }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Servicios Disponibles', font: { family: 'Poppins' } } }, scales: { x: { stacked: true }, y: { stacked: true, display: false } } }
-        });
-
-        // 6. DESGLOSE EXACTO POR TRAMO (Preparado para 0 trayectos)
-        let nombresTramos = []; let costosTramos = []; let coloresTramos = []; let bordesTramos = [];
-
-        if (tramosEvaluados.length === 0) {
-            nombresTramos = [ciudadesRaw[0] + ' (Directo)'];
-            costosTramos = [0]; coloresTramos = ['#9ca3af']; bordesTramos = ['#4b5563'];
-        } else {
-            nombresTramos = tramosEvaluados.map(t => `${t.o.substring(0,3)} ➔ ${t.d.substring(0,3)} (${t.tipo})`);
-            costosTramos = tramosEvaluados.map(t => t.costo);
-            coloresTramos = tramosEvaluados.map(t => t.tipo === 'Libre' ? 'rgba(34, 197, 94, 0.8)' : (t.tipo === 'Cuota' ? 'rgba(244, 63, 94, 0.8)' : 'rgba(156, 163, 175, 0.8)'));
-            bordesTramos = tramosEvaluados.map(t => t.tipo === 'Libre' ? '#16a34a' : (t.tipo === 'Cuota' ? '#e11d48' : '#4b5563'));
-        }
-
-        chartTrayectos = new Chart(document.getElementById('graficaTrayectos').getContext('2d'), {
-            type: 'bar', 
-            data: {
-                labels: nombresTramos,
-                datasets: [{
-                    label: 'Costo del Tramo (MXN)', data: costosTramos,
-                    backgroundColor: coloresTramos, borderColor: bordesTramos, borderWidth: 1, borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false }, title: { display: true, text: 'Precio Exacto y Tipo por cada Tramo', font: { family: 'Poppins', size: 14 } } },
-                scales: { y: { beginAtZero: true, title: { display: true, text: 'Costo en $' } }, x: { ticks: { font: { family: 'Poppins', size: 11 } } } }
-            }
-        });
+    function siguiente() {
+        idx = (idx + 1) % rutas.length;
+        mostrar();
     }
 </script>
-
 </body>
 </html>
